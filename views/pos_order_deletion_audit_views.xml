@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_pos_order_deletion_audit_list" model="ir.ui.view">
+        <field name="name">pos.order.deletion.audit.list</field>
+        <field name="model">pos.order.deletion.audit</field>
+        <field name="arch" type="xml">
+            <tree string="Order Deletion Audit" create="0" edit="0" delete="0">
+                <field name="deletion_date"/>
+                <field name="action"/>
+                <field name="order_name"/>
+                <field name="config_id"/>
+                <field name="session_id"/>
+                <field name="waitress_id"/>
+                <field name="order_state"/>
+                <field name="amount_total" sum="Total"/>
+                <field name="deleted_by_id"/>
+                <field name="reason"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_pos_order_deletion_audit_form" model="ir.ui.view">
+        <field name="name">pos.order.deletion.audit.form</field>
+        <field name="model">pos.order.deletion.audit</field>
+        <field name="arch" type="xml">
+            <form string="Order Deletion Audit" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="action"/>
+                            <field name="order_name"/>
+                            <field name="order_id"/>
+                            <field name="order_date"/>
+                            <field name="order_state"/>
+                            <field name="amount_total"/>
+                        </group>
+                        <group>
+                            <field name="config_id"/>
+                            <field name="session_id"/>
+                            <field name="waitress_id"/>
+                            <field name="deleted_by_id"/>
+                            <field name="deletion_date"/>
+                        </group>
+                    </group>
+                    <group string="Reason">
+                        <field name="reason" nolabel="1"/>
+                    </group>
+                    <group string="Order Lines Snapshot">
+                        <field name="order_lines_snapshot" nolabel="1" widget="text"/>
+                    </group>
+                    <group string="Payments Snapshot">
+                        <field name="payments_snapshot" nolabel="1" widget="text"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_pos_order_deletion_audit_search" model="ir.ui.view">
+        <field name="name">pos.order.deletion.audit.search</field>
+        <field name="model">pos.order.deletion.audit</field>
+        <field name="arch" type="xml">
+            <search string="Order Deletion Audit">
+                <field name="order_name"/>
+                <field name="config_id"/>
+                <field name="session_id"/>
+                <field name="waitress_id"/>
+                <field name="deleted_by_id"/>
+                <filter string="Deleted" name="filter_deleted" domain="[('action', '=', 'delete')]"/>
+                <filter string="Cancelled" name="filter_cancelled" domain="[('action', '=', 'cancel')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Session" name="groupby_session" context="{'group_by': 'session_id'}"/>
+                    <filter string="Waitress" name="groupby_waitress" context="{'group_by': 'waitress_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_pos_order_deletion_audit" model="ir.actions.act_window">
+        <field name="name">Order Deletion Audit</field>
+        <field name="res_model">pos.order.deletion.audit</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_pos_order_deletion_audit_search"/>
+        <field name="groups_id" eval="[(4, ref('point_of_sale.group_pos_manager'))]"/>
+    </record>
+
+    <menuitem id="menu_pos_order_deletion_audit"
+              name="Order Deletion Audit"
+              parent="point_of_sale.menu_point_of_sale"
+              action="action_pos_order_deletion_audit"
+              groups="point_of_sale.group_pos_manager"
+              sequence="85"/>
+</odoo>

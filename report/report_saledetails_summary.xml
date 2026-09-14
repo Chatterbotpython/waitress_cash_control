@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Appends two sections to the end of Odoo's core "Sales Details" /
+        Daily Sales report: session cash-control info, and deleted/
+        cancelled orders. Anchored on <t id="closing_session">, verified
+        directly against this install's actual
+        addons/point_of_sale/views/report_saledetails.xml — that id is
+        unique in the file and marks the true end of the printed report
+        (position="after" places our content after everything else,
+        not mid-document).
+    -->
+    <template id="report_saledetails_summary_inherit"
+              inherit_id="point_of_sale.report_saledetails">
+        <xpath expr="//t[@id='closing_session']" position="after">
+
+            <t t-if="pos_sessions_summary">
+                <div style="page-break-inside: avoid; margin-top: 16px;">
+                    <br/>
+                    <h3>Session Cash Control</h3>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th class="text-start">POS</th>
+                                <th class="text-start">Waitress</th>
+                                <th class="text-start">Session</th>
+                                <th class="text-end">Opening Cash</th>
+                                <th class="text-end">Tips</th>
+                                <th class="text-end">Closing (Counted)</th>
+                                <th class="text-end">Closing (Expected)</th>
+                                <th class="text-end">Difference</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="pos_sessions_summary" t-as="s">
+                                <td><span t-out="s['pos_name']">POS</span></td>
+                                <td><span t-out="s['waitress_name']">Waitress</span></td>
+                                <td><span t-out="s['session_name']">Session</span></td>
+                                <td class="text-end">
+                                    <span t-out="s['opening_cash']" t-options="{'widget': 'monetary', 'display_currency': s['currency_id']}">0.00</span>
+                                </td>
+                                <td class="text-end">
+                                    <span t-out="s['total_tips']" t-options="{'widget': 'monetary', 'display_currency': s['currency_id']}">0.00</span>
+                                </td>
+                                <td class="text-end">
+                                    <span t-out="s['closing_cash_counted']" t-options="{'widget': 'monetary', 'display_currency': s['currency_id']}">0.00</span>
+                                </td>
+                                <td class="text-end">
+                                    <span t-out="s['closing_cash_expected']" t-options="{'widget': 'monetary', 'display_currency': s['currency_id']}">0.00</span>
+                                </td>
+                                <td class="text-end">
+                                    <span t-out="s['closing_cash_difference']" t-options="{'widget': 'monetary', 'display_currency': s['currency_id']}">0.00</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="text-end" style="margin-top:8px;">
+                        <strong>Total Sales: <span t-out="total_sales" t-options="{'widget': 'monetary', 'display_currency': pos_sessions_summary[0]['currency_id']}"/></strong>
+                    </p>
+                </div>
+            </t>
+
+            <t t-if="deleted_orders_summary">
+                <div style="page-break-inside: avoid; margin-top: 16px;">
+                    <br/>
+                    <h3>Deleted / Cancelled Orders</h3>
+                    <p style="font-size:10px;">
+                        These orders were removed by a POS Manager and are
+                        NOT included in the sales totals above.
+                    </p>
+                    <p class="text-end">
+                        <strong>Total Voids (<span t-out="void_count">0</span>): <span t-out="total_voids" t-options="{'widget': 'monetary', 'display_currency': deleted_orders_summary[0]['currency_id']}"/></strong>
+                    </p>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th class="text-start">Order</th>
+                                <th class="text-start">Action</th>
+                                <th class="text-start">Waitress</th>
+                                <th class="text-end">Amount</th>
+                                <th class="text-start">Removed By</th>
+                                <th class="text-start">When</th>
+                                <th class="text-start">Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="deleted_orders_summary" t-as="d">
+                                <td><span t-out="d['order_name']">Order</span></td>
+                                <td><span t-out="d['action']">cancel</span></td>
+                                <td><span t-out="d['waitress_name']">Waitress</span></td>
+                                <td class="text-end">
+                                    <span t-out="d['amount_total']" t-options="{'widget': 'monetary', 'display_currency': d['currency_id']}">0.00</span>
+                                </td>
+                                <td><span t-out="d['deleted_by_name']">Manager</span></td>
+                                <td><span t-out="d['deletion_date']" t-options="{'widget': 'datetime'}">Date</span></td>
+                                <td><span t-out="d['reason']">Reason</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </t>
+
+        </xpath>
+    </template>
+</odoo>

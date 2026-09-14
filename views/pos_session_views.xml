@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Anchored on //header (verified stable pattern, same as elsewhere
+        in this project). The button calls action_print_thermal_session_
+        report, which itself refuses (UserError) unless state == 'closed'
+        — so it can never produce a report for a session that hasn't
+        closed or whose close failed, regardless of who clicks it or when.
+    -->
+    <record id="view_pos_session_form_thermal_inherit" model="ir.ui.view">
+        <field name="name">pos.session.form.thermal.inherit</field>
+        <field name="model">pos.session</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_session_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_print_thermal_session_report" type="object"
+                        string="Print Thermal Report" class="btn-secondary"
+                        invisible="state != 'closed'"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

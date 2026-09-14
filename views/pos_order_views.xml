@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Anchored on //header, present on virtually every Odoo form view
+        (the statusbar strip) — stable across point releases, same
+        pattern already verified working in this environment.
+        The button is manager-only in the UI (groups=...), but the real
+        enforcement is server-side in models/pos_order.py + the ir.rule
+        backstop — a hidden button here is a convenience, not the
+        security boundary.
+    -->
+    <record id="view_pos_pos_form_deletion_inherit" model="ir.ui.view">
+        <field name="name">pos.order.form.deletion.inherit</field>
+        <field name="model">pos.order</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_pos_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="%(waitress_cash_control.action_pos_order_deletion_wizard)d"
+                        type="action" string="Cancel / Delete Order..."
+                        class="btn-danger"
+                        groups="point_of_sale.group_pos_manager"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

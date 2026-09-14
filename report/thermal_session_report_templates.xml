@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Renders the SAME data dict as core's own Sales Details report
+        (report.point_of_sale.report_saledetails._get_report_values,
+        extended in models/report_sale_details.py with
+        pos_sessions_summary / deleted_orders_summary). No sales
+        calculation is reimplemented here — only the layout differs,
+        because 80mm thermal paper needs a narrow, stacked layout
+        instead of core's wide multi-column A4 tables.
+
+        page_height=0 on the paperformat (see thermal_session_report_
+        actions.xml) means this single <div class="page"> grows to fit
+        whatever content is here — there is no fixed-height container
+        to clip against.
+    -->
+    <template id="report_thermal_session">
+        <t t-call="web.html_container">
+            <div class="page" style="width:72mm; margin:0 auto; padding:2px; font-family:'Courier New', monospace; font-size:10px; line-height:1.3;">
+
+                <!-- 1-3: POS / waitress / session, dates, opening cash -->
+                <div style="text-align:center;">
+                    <div style="font-size:13px; font-weight:bold;">Thermal Session Report</div>
+                </div>
+                <div style="border-top:1px dashed #000; margin:4px 0;"/>
+                <t t-foreach="pos_sessions_summary or []" t-as="s">
+                    <table style="width:100%;">
+                        <tr><td>POS:</td><td style="text-align:right;"><span t-out="s['pos_name']"/></td></tr>
+                        <tr><td>Waitress:</td><td style="text-align:right;"><span t-out="s['waitress_name']"/></td></tr>
+                        <tr><td>Session:</td><td style="text-align:right;"><span t-out="s['session_name']"/></td></tr>
+                        <tr><td>Opened:</td><td style="text-align:right;"><span t-out="s['start_at']" t-options="{'widget': 'datetime'}"/></td></tr>
+                        <tr>
+                            <td>Closed:</td>
+                            <td style="text-align:right;">
+                                <span t-if="s['stop_at']" t-out="s['stop_at']" t-options="{'widget': 'datetime'}"/>
+                                <span t-if="not s['stop_at']">-</span>
+                            </td>
+                        </tr>
+                        <tr><td>Opening Cash:</td><td style="text-align:right;"><span t-out="s['opening_cash']" t-options="{'widget': 'monetary', 'display_currency': s['currency_id']}"/></td></tr>
+                    </table>
+                    <div style="border-top:1px dashed #000; margin:4px 0;"/>
+                </t>
+                <t t-if="not pos_sessions_summary">
+                    <div>
+                        <span t-if="session_name">Session: <span t-out="session_name"/></span>
+                        <br/>
+                        <span t-if="date_start and date_stop">
+                            <span t-out="date_start" t-options="{'widget': 'datetime'}"/> -
+                            <span t-out="date_stop" t-options="{'widget': 'datetime'}"/>
+                        </span>
+                    </div>
+                    <div style="border-top:1px dashed #000; margin:4px 0;"/>
+                </t>
+
+                <!-- 4: sales summary -->
+                <div><strong>Orders:</strong> <span t-out="nbr_orders">0</span></div>
+                <div class="oe_structure"/>
+
+                <!-- 9: product sales -->
+                <t t-if="products">
+                    <h5>Products Sold</h5>
+                    <table style="width:100%;">
+                        <t t-foreach="products" t-as="category">
+                            <tr>
+                                <td colspan="2"><strong><span t-out="category['name']"/></strong></td>
+                            </tr>
+                            <tr t-foreach="category['products']" t-as="line">
+                                <td>
+                                    <span t-out="line['quantity']"/> x <span t-out="line['product_name']"/>
+                                    <span t-if="line['discount']">(-<span t-out="line['discount']"/>%)</span>
+                                </td>
+                                <td style="text-align:right;">
+                                    <span t-out="line['base_amount']" t-options="{'widget': 'float', 'precision': currency['precision']}"/>
+                                </td>
+                            </tr>
+                        </t>
+                        <tr>
+                            <td><strong>Total</strong></td>
+                            <td style="text-align:right;"><strong><span t-out="products_info['total']" t-options="{'widget': 'float', 'precision': currency['precision']}"/></strong></td>
+                        </tr>
+                    </table>
+                    <div style="border-top:1px dashed #000; margin:4px 0;"/>
+                </t>
+
+                <!-- 7: refunds -->
+                <t t-if="refund_products">
+                    <h5>Refunds</h5>
+                    <table style="width:100%;">
+                        <t t-foreach="refund_products" t-as="category">
+                            <tr t-foreach="category['products']" t-as="line">
+                                <td>
+                                    <span t-out="line['quantity']"/> x <span t-out="line['product_name']"/>
+                                </td>
+                                <td style="text-align:right;">
+                                    <span t-out="line['base_amount']" t-options="{'widget': 'float', 'precision': currency['precision']}"/>
+                                </td>
+                            </tr>
+                        </t>
+                        <tr>
+                            <td><strong>Total</strong></td>
+                            <td style="text-align:right;"><strong><span t-out="refund_info['total']" t-options="{'widget': 'float', 'precision': currency['precision']}"/></strong></td>
+                        </tr>
+                    </table>
+                    <div style="border-top:1px dashed #000; margin:4px 0;"/>
+                </t>
+
+                <!-- 6: discounts -->
+                <div t-if="discount_number">
+                    <strong>Discounts:</strong> <span t-out="discount_number"/> orders,
+                    <span t-out="discount_amount" t-options="{'widget': 'float', 'precision': currency['precision']}"/>
+                    <div style="border-top:1px dashed #000; margin:4px 0;"/>
+                </div>
+
+                <!-- 8: taxes -->
+                <t t-if="taxes">
+                    <h5>Taxes</h5>
+                    <table style="width:100%;">
+                        <tr t-foreach="taxes" t-as="tax">
+                            <td><span t-out="tax['name']"/></td>
+                            <td style="text-align:right;"><span t-out="tax['tax_amount']" t-options="{'widget': 'float', 'precision': currency['precision']}"/></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total</strong></td>
+                            <td style="text-align:right;"><strong><span t-out="taxes_info['tax_amount']" t-options="{'widget': 'float', 'precision': currency['precision']}"/></strong></td>
+                        </tr>
+                    </table>
+                    <div style="border-top:1px dashed #000; margin:4px 0;"/>
+                </t>
+
+                <!-- 5, 13, 14, 15: payments by method, closing cash, expected vs counted, difference -->
+                <t t-if="payments">
+                    <h5>Payments</h5>
+                    <table style="width:100%;">
+                        <t t-foreach="payments" t-as="method">
+                            <t t-if="method['count']">
+                                <tr>
+                                    <td><strong><span t-out="method['name']"/></strong></td>
+                                    <td style="text-align:right;"><span t-out="method['final_count']" t-options="{'widget': 'float', 'precision': currency['precision']}"/></td>
+                                </tr>
+                                <tr t-if="'money_counted' in method">
+                                    <td>&#160;&#160;Counted</td>
+                                    <td style="text-align:right;"><span t-out="method['money_counted']" t-options="{'widget': 'float', 'precision': currency['precision']}"/></td>
+                                </tr>
+                                <tr t-if="'money_difference' in method">
+                                    <td>&#160;&#160;Difference</td>
+                                    <td style="text-align:right;"><span t-out="method['money_difference']" t-options="{'widget': 'float', 'precision': currency['precision']}"/></td>
+                                </tr>
+                            </t>
+                        </t>
+                    </table>
+                    <table style="width:100%;">
+                        <tr><td><strong>Total Sales:</strong></td><td style="text-align:right;"><strong><span t-out="total_sales" t-options="{'widget': 'float', 'precision': currency['precision']}"/></strong></td></tr>
+                    </table>
+                    <div style="border-top:1px dashed #000; margin:4px 0;"/>
+                </t>
+                <t t-foreach="pos_sessions_summary or []" t-as="s">
+                    <table style="width:100%;">
+                        <tr><td><strong>Tips:</strong></td><td style="text-align:right;"><strong><span t-out="s['total_tips']" t-options="{'widget': 'monetary', 'display_currency': s['currency_id']}"/></strong></td></tr>
+                    </table>
+                    <div style="border-top:1px dashed #000; margin:4px 0;"/>
+                </t>
+                <t t-foreach="pos_sessions_summary or []" t-as="s">
+                    <table style="width:100%;">
+                        <tr><td>Closing Cash (Counted):</td><td style="text-align:right;"><span t-out="s['closing_cash_counted']" t-options="{'widget': 'monetary', 'display_currency': s['currency_id']}"/></td></tr>
+                        <tr><td>Closing Cash (Expected):</td><td style="text-align:right;"><span t-out="s['closing_cash_expected']" t-options="{'widget': 'monetary', 'display_currency': s['currency_id']}"/></td></tr>
+                        <tr><td><strong>Difference:</strong></td><td style="text-align:right;"><strong><span t-out="s['closing_cash_difference']" t-options="{'widget': 'monetary', 'display_currency': s['currency_id']}"/></strong></td></tr>
+                    </table>
+                    <div style="border-top:1px dashed #000; margin:4px 0;"/>
+                </t>
+                <div t-if="cash_rounding_total">
+                    <strong>Cash Rounding:</strong>
+                    <span t-out="cash_rounding_total" t-options="{'widget': 'float', 'precision': currency['precision']}"/>
+                    <div style="border-top:1px dashed #000; margin:4px 0;"/>
+                </div>
+
+                <!-- 11-12: deleted/cancelled orders + reasons -->
+                <t t-if="deleted_orders_summary">
+                    <h5>Deleted / Cancelled Orders</h5>
+                    <div style="font-size:8px;">Not included in sales above.</div>
+                    <table style="width:100%;">
+                        <tr><td><strong>Total Voids (<span t-out="void_count">0</span>):</strong></td><td style="text-align:right;"><strong><span t-out="total_voids" t-options="{'widget': 'float', 'precision': currency['precision']}"/></strong></td></tr>
+                    </table>
+                    <table style="width:100%;">
+                        <t t-foreach="deleted_orders_summary" t-as="d">
+                            <tr>
+                                <td colspan="2">
+                                    <span t-out="d['order_name']"/> (<span t-out="d['action']"/>)
+                                    — <span t-out="d['waitress_name']"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Amount</td>
+                                <td style="text-align:right;"><span t-out="d['amount_total']" t-options="{'widget': 'monetary', 'display_currency': d['currency_id']}"/></td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">By <span t-out="d['deleted_by_name']"/> — <span t-out="d['reason']"/></td>
+                            </tr>
+                        </t>
+                    </table>
+                    <div style="border-top:1px dashed #000; margin:4px 0;"/>
+                </t>
+
+                <!-- 16: notes/reconciliation -->
+                <div t-if="opening_note">
+                    <strong>Opening Note:</strong> <span t-out="opening_note" t-options="{'widget': 'text'}"/>
+                </div>
+                <div t-if="closing_note">
+                    <strong>Closing Note:</strong> <span t-out="closing_note" t-options="{'widget': 'text'}"/>
+                </div>
+
+                <div style="text-align:center; font-size:8px; margin-top:8px;">
+                    <span t-out="company_name"/>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

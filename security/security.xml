@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        "Manager" = point_of_sale.group_pos_manager (no new group created).
+        "Waitress"/"POS User" = point_of_sale.group_pos_user.
+
+        This ir.rule is a defense-in-depth BACKSTOP behind the Python
+        unlink() override in models/pos_order.py. It denies the unlink
+        operation to literally everyone (no groups_id set = applies
+        globally) whenever the call is not running as superuser.
+        ir.rule (like ir.model.access) is bypassed by .sudo(), which is
+        exactly the trusted internal path
+        pos.order.deletion.wizard.action_confirm() uses after it has
+        already verified manager group membership, a mandatory reason,
+        and written the audit record.
+
+        Two independent layers (Python override + ir.rule) exist so a
+        change to one doesn't silently remove the protection.
+
+        domain_force is EXACTLY (0, '=', 1) — Odoo's expression parser
+        only special-cases this precise tuple (and (1, '=', 1) for
+        always-true) as a magic "no real field" leaf. A close-looking
+        but different tuple like (1, '=', 0) is NOT recognized as that
+        constant and gets processed as an ordinary leaf instead, where
+        Odoo tries to treat the first element as a field name/path and
+        calls .split('.') on it — which fails outright on an int. This
+        was caught by an actual install error, not just review.
+    -->
+    <record id="rule_pos_order_no_direct_unlink" model="ir.rule">
+        <field name="name">POS Order: block direct unlink for everyone (sudo-only bypass)</field>
+        <field name="model_id" ref="point_of_sale.model_pos_order"/>
+        <field name="domain_force">[(0, '=', 1)]</field>
+        <field name="perm_read">0</field>
+        <field name="perm_write">0</field>
+        <field name="perm_create">0</field>
+        <field name="perm_unlink">1</field>
+    </record>
+</odoo>

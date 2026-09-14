@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        BEST-EFFORT anchor: //page[@name='preferences'] is the
+        well-known, stable page name on base.view_users_form's
+        Preferences tab across recent Odoo versions, but it was NOT
+        verified against this install's actual
+        addons/base/views/res_users_views.xml, and it does NOT put the
+        checkbox next to "Bypass HTML Field Sanitize" as specifically
+        requested — that field lives in a technical/debug-only section
+        whose exact name/anchor needs confirming. Once you send:
+            Get-ChildItem -Path .\addons\base -Recurse -Include *.xml |
+              Select-String -Pattern "Bypass HTML"
+        this can be repositioned precisely (a one-line xpath change).
+    -->
+    <record id="view_users_form_pos_disable_deletion" model="ir.ui.view">
+        <field name="name">res.users.form.pos.disable.deletion</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='preferences']" position="inside">
+                <group string="Point of Sale" name="pos_disable_order_deletion_group">
+                    <field name="pos_disable_order_deletion"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

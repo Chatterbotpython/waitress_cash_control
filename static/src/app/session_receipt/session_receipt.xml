@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="waitress_cash_control.SessionReceipt">
+        <div class="pos-receipt">
+            <div class="pos-receipt-center-align">
+                <h3 t-esc="props.data.pos_name">POS</h3>
+                <div>Session Report</div>
+            </div>
+            <br/>
+
+            <div>Session: <span t-esc="props.data.session_name"/></div>
+            <div>Cashier: <span t-esc="props.data.pos_name"/></div>
+            <div>Waitress: <span t-esc="props.data.waitress_name"/></div>
+            <div>Opened: <span t-esc="props.data.start_at"/></div>
+            <div t-if="props.data.stop_at">Closed: <span t-esc="props.data.stop_at"/></div>
+            <br/>
+
+            <div class="pos-receipt-amount">
+                Orders
+                <span t-esc="props.data.nbr_orders" class="pos-receipt-right-align"/>
+            </div>
+            <div class="pos-receipt-amount">
+                Opening Cash
+                <span t-esc="props.formatCurrency(props.data.opening_cash)" class="pos-receipt-right-align"/>
+            </div>
+            <br/>
+
+            <t t-if="props.data.payments and props.data.payments.length">
+                <div class="pos-receipt-center-align">-- Payments --</div>
+                <div class="pos-receipt-amount" t-foreach="props.data.payments" t-as="method" t-key="method.name">
+                    <t t-esc="method.name"/>
+                    <span t-esc="props.formatCurrency(method.final_count)" class="pos-receipt-right-align"/>
+                </div>
+                <div class="pos-receipt-amount">
+                    <strong>Total Sales</strong>
+                    <strong><span t-esc="props.formatCurrency(props.data.total_sales)" class="pos-receipt-right-align"/></strong>
+                </div>
+                <br/>
+            </t>
+
+            <t t-if="props.data.discount_number">
+                <div class="pos-receipt-amount">
+                    Discounts (<t t-esc="props.data.discount_number"/>)
+                    <span t-esc="props.formatCurrency(props.data.discount_amount)" class="pos-receipt-right-align"/>
+                </div>
+                <br/>
+            </t>
+
+            <div class="pos-receipt-amount">
+                <strong>Tips</strong>
+                <strong><span t-esc="props.formatCurrency(props.data.total_tips)" class="pos-receipt-right-align"/></strong>
+            </div>
+            <br/>
+
+            <div class="pos-receipt-amount">
+                Closing Cash (Counted)
+                <span t-esc="props.formatCurrency(props.data.closing_cash_counted)" class="pos-receipt-right-align"/>
+            </div>
+            <div class="pos-receipt-amount">
+                Closing Cash (Expected)
+                <span t-esc="props.formatCurrency(props.data.closing_cash_expected)" class="pos-receipt-right-align"/>
+            </div>
+            <div class="pos-receipt-amount">
+                <strong>Difference</strong>
+                <strong><span t-esc="props.formatCurrency(props.data.closing_cash_difference)" class="pos-receipt-right-align"/></strong>
+            </div>
+            <br/>
+
+            <t t-if="props.data.deleted_orders and props.data.deleted_orders.length">
+                <div class="pos-receipt-center-align">-- Deleted / Cancelled Orders --</div>
+                <div class="pos-receipt-amount">
+                    <strong>Total Voids (<t t-esc="props.data.void_count"/>)</strong>
+                    <strong><span t-esc="props.formatCurrency(props.data.total_voids)" class="pos-receipt-right-align"/></strong>
+                </div>
+                <div t-foreach="props.data.deleted_orders" t-as="d" t-key="d.order_name">
+                    <div class="pos-receipt-amount">
+                        <t t-esc="d.order_name"/> (<t t-esc="d.action"/>) - <t t-esc="d.waitress_name"/>
+                        <span t-esc="props.formatCurrency(d.amount_total)" class="pos-receipt-right-align"/>
+                    </div>
+                    <div style="font-size:0.85em;">
+                        By manager, reason: <t t-esc="d.reason"/>
+                    </div>
+                </div>
+                <br/>
+            </t>
+
+            <div class="pos-receipt-center-align">
+                <p>Powered by Odoo</p>
+                <div t-esc="props.data.company_name"/>
+            </div>
+        </div>
+    </t>
+</templates>

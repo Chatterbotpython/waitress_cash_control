@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_pos_order_deletion_wizard_form" model="ir.ui.view">
+        <field name="name">pos.order.deletion.wizard.form</field>
+        <field name="model">pos.order.deletion.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Cancel or Delete Order">
+                <group>
+                    <field name="order_id" readonly="1"/>
+                    <field name="order_state" readonly="1"/>
+                    <field name="has_accounting_impact" invisible="1"/>
+                    <field name="action" widget="radio"/>
+                    <field name="reason" placeholder="Explain why this order is being cancelled or removed..."/>
+                </group>
+                <div class="alert alert-warning" role="alert"
+                     invisible="not has_accounting_impact or action != 'delete'">
+                    This order already has a linked invoice and/or stock
+                    picking. Deleting it will NOT corrupt or delete that
+                    posted journal entry or those pickings — they are
+                    independent records — but they will become orphaned
+                    from their source order, breaking traceability.
+                    Consider "Cancel" instead if you only need it excluded
+                    from operational reporting.
+                </div>
+                <footer>
+                    <button name="action_confirm" type="object" string="Confirm" class="btn-danger"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_pos_order_deletion_wizard" model="ir.actions.act_window">
+        <field name="name">Cancel or Delete Order</field>
+        <field name="res_model">pos.order.deletion.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="groups_id" eval="[(4, ref('point_of_sale.group_pos_manager'))]"/>
+    </record>
+</odoo>
